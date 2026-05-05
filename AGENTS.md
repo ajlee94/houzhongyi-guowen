@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## 專案狀態
 
@@ -54,11 +54,7 @@
 
 ### Next Steps
 
-- GitHub 部署仍未完成：本地 `gh auth status` 顯示未登入；GitHub plugin 目前查不到 installations/accounts/repos。
-- 若要部署 GitHub Pages，先完成其中一項：
-  - 在 PowerShell 執行 `gh auth login`，或
-  - 授權 GitHub connector 到可用帳號/repo。
-- 部署後要確認 GitHub Pages URL 可讀取 Google Sheets CSV。
+- GitHub 部署已完成：repo `https://github.com/ajlee94/houzhongyi-guowen`，GitHub Pages `https://ajlee94.github.io/houzhongyi-guowen/`。`gh auth status` 已登入 `ajlee94`，Pages 狀態已確認 `built`，公開網址回應 `200 OK`。
 - 延伸篇第41-50列中，部分篇目仍需補可靠原文來源：
   - `訓儉示康`
   - `上樞密韓太尉書`
@@ -72,4 +68,5 @@
 
 - Date: 2026-05-06 00:35 +08:00
 - Summary: 建立正式 Google Sheets 資料庫，改用官方前40篇為基準；追加其他分類延伸篇；建立 `index.html` 作為 GitHub Pages 前端，從 Sheets CSV 動態讀取；更新本地行動版閱讀頁。
-- Manual actions: 完成 GitHub 登入或 connector 授權後，才能建立/推送 repo 並開啟 GitHub Pages。
+- Deployment update: 2026-05-06 已完成 GitHub CLI 登入、建立公開 repo `ajlee94/houzhongyi-guowen`、推送 `main`，並啟用 GitHub Pages。
+- Manual actions: 若要用 Codex GitHub connector 管理 repo，之後仍可補授權 connector；本機 CLI 部署已可用。
