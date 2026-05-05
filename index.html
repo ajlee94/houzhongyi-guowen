@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>高中古文資料庫</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9dee7;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --accent: #9b3d2e;
+      --accent-2: #1d6f68;
+      --soft: #f3efe7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 22px clamp(14px, 4vw, 44px) 14px;
+    }
+
+    .header-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 46px);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 840px;
+      font-size: 15px;
+    }
+
+    .source {
+      color: var(--accent-2);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 12px clamp(10px, 3vw, 28px) 34px;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    input[type="search"] {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 13px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      appearance: none;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button.active {
+      border-color: transparent;
+      background: var(--accent);
+      color: white;
+    }
+
+    .status {
+      margin: 8px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .list {
+      position: sticky;
+      top: 74px;
+      max-height: calc(100vh - 88px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 7px;
+    }
+
+    .work-button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      text-align: left;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      padding: 10px;
+    }
+
+    .work-button:hover,
+    .work-button.selected {
+      background: var(--soft);
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #efe4d3;
+      color: #7a5b18;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .work-title {
+      display: block;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .work-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .detail {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .detail-head {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(155, 61, 46, .08), rgba(29, 111, 104, .06));
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #eef6f5;
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0 0 7px;
+      font-size: clamp(26px, 5vw, 40px);
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .author {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .detail-body {
+      padding: 14px 22px 22px;
+      display: grid;
+      gap: 10px;
+    }
+
+    details {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    details:last-child {
+      border-bottom: 0;
+    }
+
+    summary {
+      min-height: 46px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--accent);
+      font-weight: 900;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "+";
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--soft);
+      color: #7a5b18;
+      flex: 0 0 28px;
+      font-size: 18px;
+    }
+
+    details[open] summary::after {
+      content: "−";
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.85;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      padding: 26px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      body { background: var(--panel); }
+      header { padding: 18px 14px 12px; }
+      main { padding: 8px 10px 28px; }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+        gap: 9px;
+      }
+
+      input[type="search"] {
+        height: 42px;
+        font-size: 16px;
+      }
+
+      .filters {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .filters::-webkit-scrollbar { display: none; }
+
+      .filters button {
+        flex: 0 0 auto;
+        min-height: 38px;
+        padding: 8px 11px;
+        font-size: 14px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .list {
+        position: static;
+        max-height: none;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(220px, 78vw);
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        margin-inline: -10px;
+      }
+
+      .work-button {
+        min-height: 76px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        scroll-snap-align: start;
+      }
+
+      .detail {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        margin-inline: -10px;
+      }
+
+      .detail-head {
+        padding: 18px 16px;
+      }
+
+      .detail-body {
+        padding: 12px 16px 18px;
+      }
+
+      summary {
+        position: sticky;
+        top: 104px;
+        z-index: 3;
+        background: var(--panel);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>高中古文資料庫</h1>
+      <p class="subtitle">
+        Google Sheets 當資料庫，GitHub Pages 當前端。資料來源為
+        <a id="sheetLink" class="source" href="#" target="_blank" rel="noreferrer">高中古文40篇正式資料庫</a>。
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="搜尋篇名、作者、朝代、分類、關鍵字" />
+      <div class="filters" aria-label="分類篩選">
+        <button class="active" data-filter="all">全部</button>
+        <button data-filter="official">官方40篇</button>
+        <button data-filter="extra">其他分類</button>
+      </div>
+    </div>
+
+    <div id="status" class="status">正在讀取 Google Sheets...</div>
+
+    <div class="layout">
+      <nav id="list" class="list" aria-label="篇目清單"></nav>
+      <article id="detail" class="detail"></article>
+    </div>
+  </main>
+
+  <script>
+    const SHEET_ID = "11BZATYOd-QuuYzVDZMVY2k-eGd5Z69m7vlb6R80o4Nw";
+    const SHEET_NAME = "高中古文40篇正式資料庫";
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+    const state = {
+      rows: [],
+      filter: "all",
+      selected: null,
+    };
+
+    const statusEl = document.querySelector("#status");
+    const listEl = document.querySelector("#list");
+    const detailEl = document.querySelector("#detail");
+    const searchEl = document.querySelector("#search");
+    document.querySelector("#sheetLink").href = SHEET_URL;
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const ch = text[i];
+        const next = text[i + 1];
+
+        if (ch === '"' && inQuotes && next === '"') {
+          cell += '"';
+          i += 1;
+        } else if (ch === '"') {
+          inQuotes = !inQuotes;
+        } else if (ch === "," && !inQuotes) {
+          row.push(cell);
+          cell = "";
+        } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
+          if (ch === "\r" && next === "\n") i += 1;
+          row.push(cell);
+          if (row.some(value => value.trim() !== "")) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += ch;
+        }
+      }
+
+      row.push(cell);
+      if (row.some(value => value.trim() !== "")) rows.push(row);
+      return rows;
+    }
+
+    function toObjects(rows) {
+      const headers = rows[0] || [];
+      return rows.slice(1).map(row => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] || "";
+        });
+        return obj;
+      }).filter(row => row["篇名"]);
+    }
+
+    function visibleRows() {
+      const q = searchEl.value.trim().toLowerCase();
+      return state.rows.filter(row => {
+        const group = row["分組"] || "";
+        const inFilter =
+          state.filter === "all" ||
+          (state.filter === "official" && group.includes("官方前40篇")) ||
+          (state.filter === "extra" && group.includes("其他分類"));
+        const text = [
+          row["篇名"], row["作者/出處"], row["朝代"], row["分組"], row["備考關鍵字"]
+        ].join(" ").toLowerCase();
+        return inFilter && (!q || text.includes(q));
+      });
+    }
+
+    function renderList() {
+      const rows = visibleRows();
+      statusEl.textContent = `共 ${rows.length} 篇`;
+      if (!rows.length) {
+        listEl.innerHTML = `<div class="empty">找不到符合條件的篇目</div>`;
+        detailEl.innerHTML = `<div class="empty">請調整搜尋或分類。</div>`;
+        return;
+      }
+      if (!state.selected || !rows.includes(state.selected)) state.selected = rows[0];
+      listEl.innerHTML = rows.map((row, index) => `
+        <button class="work-button ${row === state.selected ? "selected" : ""}" data-index="${state.rows.indexOf(row)}">
+          <span class="num">${row["序號"] || index + 1}</span>
+          <span>
+            <span class="work-title">${row["篇名"]}</span>
+            <span class="work-meta">${row["朝代"] || ""}｜${row["作者/出處"] || ""}<br>${row["分組"] || ""}</span>
+          </span>
+        </button>
+      `).join("");
+      renderDetail();
+    }
+
+    function block(title, content, open = true) {
+      return `
+        <details ${open ? "open" : ""}>
+          <summary>${title}</summary>
+          <p>${content || "待補"}</p>
+        </details>
+      `;
+    }
+
+    function renderDetail() {
+      const row = state.selected;
+      if (!row) return;
+      const source = row["官方頁面"] && row["官方頁面"].startsWith("http")
+        ? `<a class="source" href="${row["官方頁面"]}" target="_blank" rel="noreferrer">官方來源</a>`
+        : row["官方頁面"] || "";
+      detailEl.innerHTML = `
+        <div class="detail-head">
+          <div class="badges">
+            <span class="badge">${row["分組"] || "未分類"}</span>
+            ${source ? `<span class="badge">${source}</span>` : ""}
+          </div>
+          <h2>${row["篇名"]}</h2>
+          <p class="author">${row["朝代"] || ""}｜${row["作者/出處"] || ""}</p>
+        </div>
+        <div class="detail-body">
+          ${block("原文", row["原文"], true)}
+          ${block("重點註釋", row["重點註釋"], true)}
+          ${block("白話翻譯", row["白話翻譯"], true)}
+          ${block("賞析與考點", row["賞析與考點"], true)}
+          ${block("備考關鍵字", row["備考關鍵字"], false)}
+          ${block("校訂狀態", row["原文來源/校訂狀態"], false)}
+        </div>
+      `;
+    }
+
+    async function loadSheet() {
+      try {
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        state.rows = toObjects(parseCsv(text));
+        renderList();
+      } catch (error) {
+        statusEl.textContent = "讀取 Google Sheets 失敗。請確認試算表已公開給知道連結的人檢視，或已發布到網路。";
+        detailEl.innerHTML = `<div class="empty">目前無法讀取資料：${error.message}</div>`;
+      }
+    }
+
+    listEl.addEventListener("click", event => {
+      const button = event.target.closest("button[data-index]");
+      if (!button) return;
+      state.selected = state.rows[Number(button.dataset.index)];
+      renderList();
+      if (matchMedia("(max-width: 820px)").matches) {
+        detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
+    document.querySelectorAll("[data-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        state.filter = button.dataset.filter;
+        renderList();
+      });
+    });
+
+    searchEl.addEventListener("input", renderList);
+    loadSheet();
+  </script>
+</body>
+</html>
