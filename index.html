@@ -296,6 +296,66 @@
       white-space: pre-wrap;
     }
 
+    .original-paragraph {
+      margin: 0 0 6px;
+    }
+
+    .original-paragraph:last-child {
+      margin-bottom: 0;
+    }
+
+    .note-chip,
+    .translation-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin: 0 3px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #fffaf0;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+      vertical-align: 0.12em;
+      cursor: pointer;
+    }
+
+    .translation-chip {
+      width: auto;
+      min-width: 30px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #eef6f5;
+      color: var(--accent-2);
+    }
+
+    .inline-note,
+    .inline-translation {
+      display: none;
+      margin: 6px 0 8px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .inline-translation {
+      border-left-color: var(--accent-2);
+      background: #eef6f5;
+    }
+
+    .inline-note.show,
+    .inline-translation.show {
+      display: block;
+    }
+
     .empty {
       padding: 26px;
       color: var(--muted);
@@ -531,11 +591,109 @@
       mobileWorkEl.value = String(state.rows.indexOf(state.selected));
     }
 
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[ch]));
+    }
+
+    function splitTextBlocks(value) {
+      return String(value || "")
+        .split(/\r?\n+/)
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+
+    function parseNotes(value) {
+      return String(value || "")
+        .split(/\r?\n|；|;/)
+        .map(line => line.replace(/^[\s\-•●・、]+/, "").trim())
+        .map(line => {
+          const match = line.match(/^([^：:]{1,40})[：:]\s*(.+)$/);
+          if (!match) return null;
+          return {
+            phrase: match[1].trim(),
+            text: line,
+          };
+        })
+        .filter(note => note && note.phrase.length >= 2)
+        .sort((a, b) => b.phrase.length - a.phrase.length);
+    }
+
+    function renderAnnotatedText(text, notes, paragraphIndex) {
+      const hits = [];
+      notes.forEach((note, noteIndex) => {
+        let start = text.indexOf(note.phrase);
+        while (start !== -1) {
+          hits.push({ start, end: start + note.phrase.length, note, noteIndex });
+          start = text.indexOf(note.phrase, start + note.phrase.length);
+        }
+      });
+
+      const selected = [];
+      hits.sort((a, b) => a.start - b.start || b.end - a.end);
+      hits.forEach(hit => {
+        if (!selected.some(item => hit.start < item.end && hit.end > item.start)) {
+          selected.push(hit);
+        }
+      });
+
+      if (!selected.length) return escapeHtml(text);
+
+      let html = "";
+      let cursor = 0;
+      selected.sort((a, b) => a.start - b.start).forEach((hit, index) => {
+        const noteId = `note-${paragraphIndex}-${hit.noteIndex}-${hit.start}-${index}`;
+        html += escapeHtml(text.slice(cursor, hit.end));
+        html += `<button class="note-chip" type="button" aria-expanded="false" aria-controls="${noteId}" title="顯示註釋">註</button>`;
+        html += `<span id="${noteId}" class="inline-note">${escapeHtml(hit.note.text)}</span>`;
+        cursor = hit.end;
+      });
+      html += escapeHtml(text.slice(cursor));
+      return html;
+    }
+
+    function renderOriginal(original, notesText, translationText) {
+      const originalBlocks = splitTextBlocks(original);
+      if (!originalBlocks.length) return `<p>待補</p>`;
+
+      const notes = parseNotes(notesText);
+      const translationBlocks = splitTextBlocks(translationText);
+      const fallbackTranslation = translationText || "待補";
+
+      return originalBlocks.map((paragraph, index) => {
+        const translation = translationBlocks.length === originalBlocks.length
+          ? translationBlocks[index]
+          : fallbackTranslation;
+        const translationId = `translation-${index}`;
+        return `
+          <p class="original-paragraph">
+            ${renderAnnotatedText(paragraph, notes, index)}
+            <button class="translation-chip" type="button" aria-expanded="false" aria-controls="${translationId}" title="顯示翻譯">譯</button>
+            <span id="${translationId}" class="inline-translation">${escapeHtml(translation)}</span>
+          </p>
+        `;
+      }).join("");
+    }
+
     function block(title, content, open = true) {
       return `
         <details ${open ? "open" : ""}>
           <summary>${title}</summary>
-          <p>${content || "待補"}</p>
+          <p>${escapeHtml(content || "待補")}</p>
+        </details>
+      `;
+    }
+
+    function htmlBlock(title, htmlContent, open = true) {
+      return `
+        <details ${open ? "open" : ""}>
+          <summary>${title}</summary>
+          ${htmlContent}
         </details>
       `;
     }
@@ -556,7 +714,7 @@
           <p class="author">${row["朝代"] || ""}｜${row["作者/出處"] || ""}</p>
         </div>
         <div class="detail-body">
-          ${block("原文", row["原文"], true)}
+          ${htmlBlock("原文", renderOriginal(row["原文"], row["重點註釋"], row["白話翻譯"]), true)}
           ${block("重點註釋", row["重點註釋"], true)}
           ${block("白話翻譯", row["白話翻譯"], true)}
           ${block("賞析與考點", row["賞析與考點"], true)}
@@ -565,6 +723,15 @@
         </div>
       `;
     }
+
+    detailEl.addEventListener("click", event => {
+      const toggle = event.target.closest(".note-chip, .translation-chip");
+      if (!toggle) return;
+      const target = document.getElementById(toggle.getAttribute("aria-controls"));
+      if (!target) return;
+      const isOpen = target.classList.toggle("show");
+      toggle.setAttribute("aria-expanded", String(isOpen));
+    });
 
     async function loadSheet() {
       try {
